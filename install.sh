@@ -20,7 +20,7 @@ mkdir -p "$PLUGIN_DIR"
 
 # Download main plugin file
 echo "📥 Downloading plugin..."
-wget -q "$GITHUB_RAW/plugin.py" -O "$PLUGIN_DIR/plugin.py"
+wget -q "$GITHUB_RAW/plugin.pyc" -O "$PLUGIN_DIR/plugin.pyc"
 
 if [ $? -eq 0 ]; then
     echo "✅ Plugin downloaded successfully!"
