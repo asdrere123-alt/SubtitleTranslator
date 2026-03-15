@@ -35,21 +35,27 @@ fi
 
 chmod 755 "$PLUGIN_DIR/plugin.pyc"
 
-# 4. Handle Keys Configuration (Persistent)
+# 4. Deep Clean & Fresh Configuration
 KEYS_FILE="/etc/subtitle_keys.conf"
-if [ ! -f "$KEYS_FILE" ]; then
-    echo "🔑 No existing keys.conf found. Creating new template at $KEYS_FILE"
-    echo "# Subtitle Translator API Keys Configuration" > "$KEYS_FILE"
-    echo "# You can add multiple keys for Groq/Gemini to avoid limits" >> "$KEYS_FILE"
-    echo "GROQ_KEY=" >> "$KEYS_FILE"
-    echo "GROQ_KEY=" >> "$KEYS_FILE"
-    echo "GEMINI_KEY=" >> "$KEYS_FILE"
-    echo "GEMINI_KEY=" >> "$KEYS_FILE"
-    echo "OCRSPACE_KEY=" >> "$KEYS_FILE"
-    echo "APININJAS_KEY=" >> "$KEYS_FILE"
-else
-    echo "✅ Existing configuration preserved at $KEYS_FILE"
-fi
+LOGS_FILE="/tmp/subtitle_translator.log"
+CACHE_FILE="/tmp/subtitle_cache.json"
+
+echo "🧹 Performing deep clean of old configurations and logs..."
+rm -f "$KEYS_FILE"
+rm -f "$LOGS_FILE"
+rm -f "$LOGS_FILE.old"
+rm -f "$CACHE_FILE"
+
+echo "🔑 Creating fresh keys.conf template at $KEYS_FILE"
+echo "# Subtitle Translator API Keys Configuration" > "$KEYS_FILE"
+echo "# You can add multiple keys for Groq/Gemini to avoid limits" >> "$KEYS_FILE"
+echo "GROQ_KEY=" >> "$KEYS_FILE"
+echo "GROQ_KEY=" >> "$KEYS_FILE"
+echo "GEMINI_KEY=" >> "$KEYS_FILE"
+echo "GEMINI_KEY=" >> "$KEYS_FILE"
+echo "OCRSPACE_KEY=" >> "$KEYS_FILE"
+echo "APININJAS_KEY=" >> "$KEYS_FILE"
+echo "GOOGLE_KEY=" >> "$KEYS_FILE"
 
 echo "================================================="
 echo "✅ Installation Complete!"
