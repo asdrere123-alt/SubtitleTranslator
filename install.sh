@@ -59,9 +59,8 @@ echo "GOOGLE_KEY=" >> "$KEYS_FILE"
 
 echo "================================================="
 echo "✅ Installation Complete!"
-echo "🔄 GUI will restart in 5 seconds..."
+echo "🔄 Restarting GUI NOW..."
 echo "================================================="
-sleep 1; echo "4..."; sleep 1; echo "3..."; sleep 1; echo "2..."; sleep 1; echo "1..."; sleep 1;
 
 # 5. Restart Enigma2
 sync
