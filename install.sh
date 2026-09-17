@@ -1,68 +1,78 @@
 #!/bin/sh
-# ============================================================
-# 🚀 Subtitle Translator public-installer
-# Enhanced Clean-Install Script
-# ============================================================
+# Download a complete update before replacing the installed Enigma2 plugin.
+set -eu
 
 PLUGIN_DIR="/usr/lib/enigma2/python/Plugins/Extensions/SubtitleTranslator"
+KEYS_FILE="/etc/subtitle_keys.conf"
 GITHUB_RAW="https://raw.githubusercontent.com/asdrere123-alt/SubtitleTranslator/main"
 
-echo "================================================="
-echo "🎯 Subtitle Translator - Professional Installer"
-echo "================================================="
-
-# 1. Force Remove Old Version
-if [ -d "$PLUGIN_DIR" ]; then
-    echo "🗑️  Removing old version found at $PLUGIN_DIR..."
-    rm -rf "$PLUGIN_DIR"
-fi
-
-# 2. Recreate Directory
-echo "📁 Preparing fresh installation folder..."
-mkdir -p "$PLUGIN_DIR"
-
-# 3. Download Latest Files
-echo "🌐 Downloading latest release from GitHub..."
-WGET_OPTS="--no-check-certificate"
-wget -q $WGET_OPTS "$GITHUB_RAW/plugin.pyc?t=$(date +%s)" -O "$PLUGIN_DIR/plugin.pyc"
-wget -q $WGET_OPTS "$GITHUB_RAW/plugin.png?t=$(date +%s)" -O "$PLUGIN_DIR/plugin.png"
-wget -q $WGET_OPTS "$GITHUB_RAW/__init__.py?t=$(date +%s)" -O "$PLUGIN_DIR/__init__.py"
-
-if [ $? -ne 0 ]; then
-    echo "❌ Error: Download failed! Please check your internet connection."
+if [ "$(id -u)" != "0" ]; then
+    echo "Error: run this installer as root." >&2
     exit 1
 fi
+command -v wget >/dev/null 2>&1 || { echo "Error: wget is required." >&2; exit 1; }
 
-chmod 755 "$PLUGIN_DIR/plugin.pyc"
+PARENT_DIR=$(dirname "$PLUGIN_DIR")
+mkdir -p "$PARENT_DIR"
+STAGING_DIR=$(mktemp -d "$PARENT_DIR/.subtitle-install.XXXXXX")
+BACKUP_DIR="$STAGING_DIR/previous"
+cleanup() {
+    if [ -d "$BACKUP_DIR" ] && [ ! -e "$PLUGIN_DIR" ]; then
+        if ! mv "$BACKUP_DIR" "$PLUGIN_DIR"; then
+            echo "Error: restore the previous installation from $BACKUP_DIR" >&2
+            return
+        fi
+    fi
+    rm -rf "$STAGING_DIR"
+}
+trap cleanup 0
+trap 'exit 1' 1 2 15
+mkdir "$STAGING_DIR/new"
 
-# 4. Deep Clean & Fresh Configuration
-KEYS_FILE="/etc/subtitle_keys.conf"
-LOGS_FILE="/tmp/subtitle_translator.log"
-CACHE_FILE="/tmp/subtitle_cache.json"
+echo "Downloading Subtitle Translator..."
+for file in plugin.pyc plugin.png __init__.py; do
+    if ! wget -q -O "$STAGING_DIR/new/$file" "$GITHUB_RAW/$file"; then
+        echo "Error: failed to download $file. Existing installation preserved." >&2
+        exit 1
+    fi
+done
+# __init__.py is intentionally empty in this repository.
+if [ ! -s "$STAGING_DIR/new/plugin.pyc" ] || [ ! -s "$STAGING_DIR/new/plugin.png" ]; then
+    echo "Error: incomplete download. Existing installation preserved." >&2
+    exit 1
+fi
+chmod 755 "$STAGING_DIR/new"
+chmod 644 "$STAGING_DIR/new/"*
 
-echo "🧹 Performing deep clean of old configurations and logs..."
-rm -f "$KEYS_FILE"
-rm -f "$LOGS_FILE"
-rm -f "$LOGS_FILE.old"
-rm -f "$CACHE_FILE"
+# Never truncate or replace an existing keys file.
+if [ ! -e "$KEYS_FILE" ] && [ ! -L "$KEYS_FILE" ]; then
+    (
+        umask 077
+        set -C
+        cat > "$KEYS_FILE" <<'KEYS'
+# Subtitle Translator API Keys Configuration
+# Multiple Groq/Gemini keys may be entered, one per line.
+# Respect each provider's terms and quotas.
+GROQ_KEY=
+GEMINI_KEY=
+OCRSPACE_KEY=
+APININJAS_KEY=
+GOOGLE_KEY=
+KEYS
+    )
+else
+    echo "Existing API-key configuration preserved."
+fi
 
-echo "🔑 Creating fresh keys.conf template at $KEYS_FILE"
-echo "# Subtitle Translator API Keys Configuration" > "$KEYS_FILE"
-echo "# You can add multiple keys for Groq/Gemini to avoid limits" >> "$KEYS_FILE"
-echo "GROQ_KEY=" >> "$KEYS_FILE"
-echo "GROQ_KEY=" >> "$KEYS_FILE"
-echo "GEMINI_KEY=" >> "$KEYS_FILE"
-echo "GEMINI_KEY=" >> "$KEYS_FILE"
-echo "OCRSPACE_KEY=" >> "$KEYS_FILE"
-echo "APININJAS_KEY=" >> "$KEYS_FILE"
-echo "GOOGLE_KEY=" >> "$KEYS_FILE"
+if [ -e "$PLUGIN_DIR" ]; then
+    mv "$PLUGIN_DIR" "$BACKUP_DIR"
+fi
+# The exit trap restores the backup if this move fails.
+mv "$STAGING_DIR/new" "$PLUGIN_DIR"
+rm -f /tmp/subtitle_translator.log /tmp/subtitle_translator.log.old /tmp/subtitle_cache.json
 
-echo "================================================="
-echo "✅ Installation Complete!"
-echo "🔄 Restarting GUI NOW..."
-echo "================================================="
-
-# 5. Restart Enigma2
+echo "Installation complete. Restarting the Enigma2 GUI..."
 sync
-killall -9 enigma2
-exit 0
+if ! killall -9 enigma2; then
+    echo "Please restart the Enigma2 GUI manually."
+fi

@@ -1,0 +1,60 @@
+name: Bug report
+description: Report a reproducible problem with Subtitle Translator
+title: "[Bug]: "
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting a problem. Remove API keys, tokens, local IP addresses, and private subtitle content before submitting.
+  - type: input
+    id: receiver
+    attributes:
+      label: Receiver model
+      placeholder: e.g. Dreambox, Vu+, Octagon
+    validations:
+      required: true
+  - type: input
+    id: image
+    attributes:
+      label: Enigma2 image and version
+      placeholder: e.g. OpenATV 7.x
+    validations:
+      required: true
+  - type: input
+    id: python
+    attributes:
+      label: Python version
+      placeholder: e.g. Python 3.11
+    validations:
+      required: true
+  - type: dropdown
+    id: mode
+    attributes:
+      label: Subtitle mode
+      options:
+        - DVB or teletext
+        - Image or OCR
+        - Local OCR
+        - Other
+    validations:
+      required: true
+  - type: input
+    id: providers
+    attributes:
+      label: Translation and OCR providers
+      placeholder: Provider names only; never paste API keys
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: Explain what you did, what you expected, and what happened.
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Redacted log output
+      description: Paste only the relevant lines after removing secrets and private data.
+      render: shell

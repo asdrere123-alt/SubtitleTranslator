@@ -1,0 +1,13 @@
+__pycache__/
+*.pyo
+.DS_Store
+.idea/
+.vscode/
+.env
+.env.*
+*.log
+subtitle_keys.conf
+.venv/
+venv/
+
+# The packaged Enigma2 plugin.pyc is currently tracked intentionally.
